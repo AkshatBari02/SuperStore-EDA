@@ -1,7 +1,6 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
-import os
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -24,7 +23,6 @@ if fl is not None:
     elif filename.endswith(('.xlsx', '.xls')):
         df = pd.read_excel(fl)
 else:
-    os.chdir(r"G:\Data Analytics")
     df = pd.read_excel("Superstore.xls")
 
 if not all(col in df.columns for col in required_columns):
