@@ -87,7 +87,7 @@ else:
     with col1:
         st.subheader("Category wise Sales")
         fig = px.bar(category_df, x = "Category", y="Sales", text = ['${:,.2f}'.format(x) for x in category_df["Sales"]], template="seaborn")
-        st.plotly_chart(fig,width="stretch",height = 200)
+        st.plotly_chart(fig,width="stretch")
 
     with col2:
         st.subheader("Region wise Sales")
