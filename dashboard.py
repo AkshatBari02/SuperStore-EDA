@@ -13,7 +13,7 @@ st.markdown('<style>div.block-container{padding-top:2rem;}</style>',unsafe_allow
 
 
 
-required_columns = ["Order Date", "Region", "State", "City", "Category", "Sales"]
+required_columns = ["Order Date", "Region", "State", "City", "Category", "Sub-Category", "Sales", "Profit", "Quantity"]
 fl = st.file_uploader(":file_folder: Upload a file",type=(['csv','txt','xlsx','xls']))
 if fl is not None:
     filename = fl.name
@@ -26,7 +26,7 @@ else:
     df = pd.read_excel("Superstore.xls")
 
 if not all(col in df.columns for col in required_columns):
-    st.error("The uploaded file does not contain the required columns.")
+    st.error("The uploaded file does not contain the required columns.\nRequired columns are: ",required_columns)
 else:
     col1, col2 = st.columns((2))
     df["Order Date"] = pd.to_datetime(df["Order Date"])
@@ -87,13 +87,13 @@ else:
     with col1:
         st.subheader("Category wise Sales")
         fig = px.bar(category_df, x = "Category", y="Sales", text = ['${:,.2f}'.format(x) for x in category_df["Sales"]], template="seaborn")
-        st.plotly_chart(fig,use_container_width=True,height = 200)
+        st.plotly_chart(fig,width="stretch",height = 200)
 
     with col2:
         st.subheader("Region wise Sales")
         fig = px.pie(filtered_df,values = "Sales",names = "Region",hole = 0.5)
         fig.update_traces(text = filtered_df["Region"], textposition = "outside")
-        st.plotly_chart(fig,use_container_width=True)
+        st.plotly_chart(fig,width="stretch")
 
 
     cl1, cl2 = st.columns((2))
@@ -112,7 +112,7 @@ else:
             elif download_type == 'xlsx':
                 excel_file = pd.ExcelWriter('Category.xlsx', engine='openpyxl')
                 category_df.to_excel(excel_file, index=False, sheet_name='Category Data')
-                excel_file.save()
+                excel_file.close()
                 # Read the file to get bytes
                 with open('Category.xlsx', 'rb') as f:
                     excel_data = f.read()
@@ -133,7 +133,7 @@ else:
             elif download_type == 'xlsx':
                 excel_file = pd.ExcelWriter('Region.xlsx', engine='openpyxl')
                 category_df.to_excel(excel_file, index=False, sheet_name='Region Data')
-                excel_file._save()
+                excel_file.close()
                 # Read the file to get bytes
                 with open('Region.xlsx', 'rb') as f:
                     excel_data = f.read()
@@ -145,10 +145,10 @@ else:
 
     linechart = pd.DataFrame(filtered_df.groupby(filtered_df["month_year"].dt.strftime("%Y : %b"))["Sales"].sum()).reset_index()
     fig2 = px.line(linechart, x="month_year", y="Sales",labels={"Sales":"Amount"},height=500,width=1000,template="gridon")
-    st.plotly_chart(fig2,use_container_width=True)
+    st.plotly_chart(fig2,width="stretch")
 
     with st.expander("View TimeSeries Data:"):
-        st.write(linechart.T)
+        st.write(linechart.T.astype(str))
         # Download options
         download_type = st.selectbox("Select file format for download:", ['csv', 'xlsx'],key="timeSeries_format")
         
@@ -159,7 +159,7 @@ else:
         elif download_type == 'xlsx':
             excel_file = pd.ExcelWriter('TimeSeries.xlsx', engine='openpyxl')
             category_df.to_excel(excel_file, index=False, sheet_name='TimeSeries Data')
-            excel_file._save()
+            excel_file.close()
             # Read the file to get bytes
             with open('TimeSeries.xlsx', 'rb') as f:
                 excel_data = f.read()
@@ -169,8 +169,8 @@ else:
     # Create a treemap based on Region,Category,sub-Category
     st.subheader("Hierarchical view of Sales using TreeMap")
     fig3 = px.treemap(filtered_df,path=["Region","Category","Sub-Category"],values="Sales",hover_data=["Sales"],color="Sub-Category")
-    fig3.update_layout(width=800,height=650)
-    st.plotly_chart(fig3,use_container_width=True)
+    fig3.update_layout(width=1000,height=650)
+    st.plotly_chart(fig3,width="stretch")
 
 
     chart1,chart2 = st.columns((2))
@@ -178,20 +178,20 @@ else:
         st.subheader('Segment wise Sales')
         fig = px.pie(filtered_df,values = "Sales",names = "Segment", template="plotly_dark")
         fig.update_traces(text = filtered_df["Segment"],textposition = "inside")
-        st.plotly_chart(fig,use_container_width=True)
+        st.plotly_chart(fig,width="stretch")
 
     with chart2:
         st.subheader('Category wise Sales')
         fig = px.pie(filtered_df,values = "Sales",names = "Category", template="gridon")
         fig.update_traces(text = filtered_df["Category"],textposition = "inside")
-        st.plotly_chart(fig,use_container_width=True)
+        st.plotly_chart(fig,width="stretch")
 
     import plotly.figure_factory as ff
     st.subheader(":point_right: Month wise Sub-Category Sales Summary")
     with st.expander("Summary Table"):
         df_sample = df[0:5][["Region","State","City","Category","Sales","Profit","Quantity"]]
         fig = ff.create_table(df_sample,colorscale="Cividis")
-        st.plotly_chart(fig,use_container_width=True)
+        st.plotly_chart(fig,width="stretch")
 
         st.markdown("Month wise sub-category table")
         filtered_df["month"] = filtered_df["Order Date"].dt.month_name()
@@ -200,9 +200,9 @@ else:
 
     # Create a scatter plot
     data1 = px.scatter(filtered_df,x="Sales",y="Profit",size="Quantity")
-    data1['layout'].update(title="Relationship between Sales and Profits using Scatter Plot.",titlefont = dict(size=20),xaxis = dict(title="Sales",titlefont=dict(size=19)),yaxis = dict(title="Profit",titlefont=dict(size=19)))
+    data1.update_layout(title_text="Relationship between Sales and Profits using Scatter Plot.",title_font=dict(size=20),xaxis=dict(title="Sales",title_font=dict(size=19)),yaxis=dict(title="Profit",title_font=dict(size=19)))
 
-    st.plotly_chart(data1,use_container_width=True)
+    st.plotly_chart(data1,width="stretch")
 
     with st.expander("View Data"):
         st.write(filtered_df.iloc[:,:])
@@ -217,7 +217,7 @@ else:
     elif download_type == 'xlsx':
         excel_file = pd.ExcelWriter('Data.xlsx', engine='openpyxl')
         df.to_excel(excel_file, index=False, sheet_name='Data')
-        excel_file._save()
+        excel_file.close()
         # Read the file to get bytes
         with open('Data.xlsx', 'rb') as f:
             excel_data = f.read()
